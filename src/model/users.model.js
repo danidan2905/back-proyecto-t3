@@ -1,13 +1,13 @@
 const db = require('../../knexfile');
 
 const findUserData = async (user, password) => {
-    const result = await db.select('*').from('users')
-    .join('security_questions', 'users.id_security_question', 'security_questions.id')
-    .join('security_answers', 'users.id_security_answer', 'security_answers.id')
-    .join('user_roles', 'users.id_user_rol', 'user_roles.id')
+    const result = await db('usuarios as u')
+    .select("u.id", "u.nombre", "u.usuario", "u.contraseña", "u.cargo", "u.correo", "u.respuesta_seguridad")
+    .select("ps.id as id_pregunta_seguridad", "ps.valor")
+    .join('preguntas_seguridad as ps', 'u.id_pregunta_seguridad', 'ps.id')
     .where({
-        username: user,
-        password: password
+        usuario: user,
+        'contraseña': password
     }).first();
 
     return result;
@@ -47,10 +47,25 @@ const removeTokenByIdUserModel = async (id_user) => {
     return false;
 };
 
+const findUserByToken = async (token) => {
+    const userByToken = await db("tokens").where({token: token})
+    .join("usuarios", "usuarios.id", "tokens.id_user").first();
+
+    return userByToken;
+};
+
+const findUserById = (id) => {};
+
+
+const registerNewUser = () => {};
+
+const deleteUserById = () => {};
+
 module.exports = {
     findUserData,
     saveTokenModel,
     findTokenByIdUserModel,
     updateTokenModel,
-    removeTokenByIdUserModel
+    removeTokenByIdUserModel,
+    findUserByToken
 }

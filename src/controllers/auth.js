@@ -1,14 +1,17 @@
 const {StatusCodes} = require("http-status-codes");
 const { generateToken } = require('../helpers/token');
+const cryptojs = require("crypto-js");
 const {
     findUserData,
     findTokenByIdUserModel,
     saveTokenModel,
     removeTokenByIdUserModel
-} = require('../model/login.model');
+} = require('../model/users.model');
 
 const login = async (req, res) => {
     let {username, password} = req.body;
+
+    const passwordHASH256 = String(cryptojs.SHA256(password));
 
     const userData = await findUserData(username, password);
     if (userData){
@@ -22,8 +25,7 @@ const login = async (req, res) => {
 
         res.status(StatusCodes.OK).send({
             ok: true,
-            userData,
-            token: findToken?.token ? findToken.token : token
+            object: {...userData, token: token},
         });
 
         return;
@@ -49,6 +51,7 @@ const register_user = async (req, res) => {
         id_security_answer,
         id_user_rol
     } = req.body;
+
     return true;
 };
 
