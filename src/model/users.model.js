@@ -1,3 +1,4 @@
+let moment = require("moment");
 const db = require('../../knexfile');
 
 const findUserData = async (user, password) => {
@@ -16,7 +17,10 @@ const findUserData = async (user, password) => {
 const saveTokenModel = async (token, id_user) => {
     const result = await db("tokens").insert({
         token,
-        id_user
+        id_user,
+        created_at: moment().format("YYYY-MM-DD HH:mm:ss"),
+        expires_at: moment().add(4, "hours").format("YYYY-MM-DD HH:mm:ss"),
+        state: 1
     });
 
     return result;

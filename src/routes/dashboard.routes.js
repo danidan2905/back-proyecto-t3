@@ -1,14 +1,9 @@
-const { getTotalAmount } = require("../controllers/dashboard");
+const { getHomeValues, getSummaryOffices } = require("../controllers/dashboard");
 
 const router = require("express").Router();
 
-router.get("/get-total-amount", getTotalAmount);
-router.get("/amount-last-month");
-router.get("/amount-current-month");
-router.get("/total-offices");
-router.get("/total-offices-in-use");
-router.get("/total-free-offices");
+router.get("/get-total-amount", getHomeValues);
 
-router.get("/offices-summary");
+router.get("/get-offices-summary", getSummaryOffices);
 
 module.exports = router;

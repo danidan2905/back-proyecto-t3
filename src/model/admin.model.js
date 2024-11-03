@@ -1,6 +1,7 @@
 const db = require("../../knexfile");
 
 const addNewPaymentModel = async (body) => {
+    console.log(body);
     const result = await db("historial_pagos").insert({
         id_consultorios_medicos: body.id_consultorios_medicos,
         fecha_corte: body.fecha_corte,
@@ -11,13 +12,14 @@ const addNewPaymentModel = async (body) => {
     await db("consultorios_medicos").where({
         id: body.id_consultorios_medicos
     }).update({
-        solvente: 1
+        solvente: body.solvente
     });
     
     return result;
 };
 
 const updatePaymentModel = async (body) => {
+    console.log(body);
     const old_id = body?.old_id_consultorios_medicos;
 
     if (old_id){
@@ -40,7 +42,7 @@ const updatePaymentModel = async (body) => {
     await db("consultorios_medicos").where({
         id: body.id_consultorios_medicos
     }).update({
-        solvente: 1
+        solvente: body.solvente
     });
 
     return result;
@@ -74,7 +76,6 @@ const addNewDoctorsOfficeModel = async (body) => {
 };
 
 const addOrUpdateSpecialtiesModel = async (body) => {
-    console.log(body);
     for (let i = 0; i < body.length; i++){
         try{
             const update = await db("especialidad").select("*").where({
