@@ -13,9 +13,9 @@ const {
 const login = async (req, res) => {
     let {username, password} = req.body;
 
-    const passwordHASH256 = String(cryptojs.SHA256(password));
+    const passSHA = String(cryptojs.SHA256(password));
 
-    const userData = await findUserData(username, password);
+    const userData = await findUserData(username, passSHA);
     if (userData){
         if (userData.estado){
             const findToken = await findTokenByIdUserModel(userData.id);
@@ -52,22 +52,6 @@ const login = async (req, res) => {
         });
         return;
     }
-};
-
-const register_user = async (req, res) => {
-    let {
-        email,
-        username,
-        password,
-        first_name,
-        last_name, 
-        phonenumber,
-        id_security_question,
-        id_security_answer,
-        id_user_rol
-    } = req.body;
-
-    return true;
 };
 
 const blockUser = async (req, res) => {

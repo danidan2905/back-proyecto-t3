@@ -1,6 +1,7 @@
 const { StatusCodes } = require("http-status-codes");
 const { getAllSecurityQModel, addUserModel, getAllUsersModel, editUserModel, deleteUserModel } = require("../model/superadmin.model");
 const { findUserByToken } = require("../model/users.model");
+const cryptojs = require("crypto-js");
 
 const getAllSecurityQ = async (req, res) => {
     try{
@@ -70,6 +71,8 @@ const addUser = async (req, res) => {
         const token = header.authorization.split("Bearer ")[1] || '---';
 
         const result = await findUserByToken(token);
+
+        body.pass = String(cryptojs.SHA256(body.pass));
 
         if (result.cargo == 'superadmin'){
             const response = await addUserModel(body);
