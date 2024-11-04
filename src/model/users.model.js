@@ -3,12 +3,12 @@ const db = require('../../knexfile');
 
 const findUserData = async (user, password) => {
     const result = await db('usuarios as u')
-    .select("u.id", "u.nombre", "u.usuario", "u.contraseña", "u.cargo", "u.correo", "u.respuesta_seguridad")
+    .select("u.id", "u.nombre", "u.usuario", "u.cargo", "u.correo", "u.estado")
     .select("ps.id as id_pregunta_seguridad", "ps.valor")
     .join('preguntas_seguridad as ps', 'u.id_pregunta_seguridad', 'ps.id')
     .where({
         usuario: user,
-        'contraseña': password
+        'contraseña': password,
     }).first();
 
     return result;
@@ -28,7 +28,7 @@ const saveTokenModel = async (token, id_user) => {
 
 const findTokenByIdUserModel = async (id_user) => {
     const result = await db("tokens").select("*").where({
-        id_user
+        id_user: id_user
     }).first();
 
     return result;
@@ -58,6 +58,41 @@ const findUserByToken = async (token) => {
     return userByToken;
 };
 
+const unlockUserModel = async (auth, id_user) => {
+    const findUser = await db("usuarios").select("id").where(({
+        usuario: auth.username,
+        'contraseña': auth.password,
+    }));
+    
+    if (findUser.length){
+        await db("usuarios").update({
+            estado: 1
+        }).where({
+            id: id_user
+        });
+
+        return {
+            ok: true
+        }
+    }
+    else{
+        return {
+            error: 'Contraseña incorrecta',
+            ok: false
+        }
+    }
+};
+
+const blockUserModel = async (usuario) => {
+    const result = await db("usuarios").update({
+        estado: 0
+    }).where({
+        usuario: usuario
+    });
+
+    return result;
+};
+
 const findUserById = (id) => {};
 
 
@@ -71,5 +106,7 @@ module.exports = {
     findTokenByIdUserModel,
     updateTokenModel,
     removeTokenByIdUserModel,
-    findUserByToken
+    findUserByToken,
+    blockUserModel,
+    unlockUserModel
 }

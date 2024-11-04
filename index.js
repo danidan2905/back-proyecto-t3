@@ -6,7 +6,9 @@ const cors = require("cors");
 const logger = require("morgan");
 
 // CORS
-app.use(cors());
+app.use(cors({
+    origin: "http://localhost:4200"
+}));
 
 // MIDDLEWARE
 app.use(express.json());
