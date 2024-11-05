@@ -10,8 +10,13 @@ const {
     unlockUserModel,
     getSecurityQuestionModel,
     checkAnswerModel,
-    updatePasswordModel
+    updatePasswordModel,
+    getEmailByUsernameModel,
+    saveCodeModel,
+    checkCodeModel,
+    deleteCodeModel
 } = require('../model/users.model');
+const sendCodeToMail = require("../helpers/emailSender");
 
 const login = async (req, res) => {
     let {username, password} = req.body;
@@ -188,6 +193,71 @@ const modifyPassword = async (req, res) => {
     }
 };
 
+const sendCodeByUsername = async (req, res) => {
+    try{
+        let {username} = req.params;
+    
+        const result = await getEmailByUsernameModel(username);
+
+        const code = Math.floor(Math.random() * 99999);
+
+        if (result?.correo && result?.id){
+            await saveCodeModel(code, result.id);
+            sendCodeToMail(code, result.correo);
+            res.status(StatusCodes.ACCEPTED).send({
+                ok: true,
+                object: result
+            });
+            return;
+        }
+        else{
+            res.status(StatusCodes.BAD_REQUEST).send({
+                ok: false,
+                error: 'Usuario no encontrado'
+            });
+        }
+    }
+    catch(e){
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+            ok: true,
+            error: e.toString()
+        });
+        return;
+    }
+};
+
+const checkCode = async (req, res) => {
+    try{
+        let {code, id} = req.body;
+    
+        const result = await checkCodeModel(code, id);
+
+        console.log(result);
+
+        if (result?.id){
+            await deleteCodeModel(code, result.id);
+            res.status(StatusCodes.ACCEPTED).send({
+                ok: true,
+                object: result
+            });
+        }
+        else{
+            res.status(StatusCodes.ACCEPTED).send({
+                ok: false,
+                error: 'Código incorrecto'
+            });
+        }
+        return;
+    }
+    catch(e){
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+            ok: true,
+            error: e.toString()
+        });
+        return;
+    }
+};
+
 module.exports = {
     login,
     logout,
@@ -196,5 +266,7 @@ module.exports = {
     unlockUser,
     getSecurityQuestion,
     checkAnswer,
-    modifyPassword
+    modifyPassword,
+    sendCodeByUsername,
+    checkCode
 }

@@ -106,13 +106,21 @@ const getSecurityQuestionModel = async (username) => {
 }
 
 const checkAnswerModel = async (answer, id_user) => {
-    console.log(answer);
-    console.log(id_user);
     const result = await db("usuarios").select("usuarios.id")
     .where({
         id: id_user,
         respuesta_seguridad: answer
     });
+
+    return result;
+};
+
+const checkCodeModel = async (code, id) => {
+    const result = await db("codigos_seguridad").select("codigos_seguridad.id")
+    .where({
+        id_usuario: id,
+        valor: code
+    }).first();
 
     return result;
 };
@@ -134,6 +142,48 @@ const updatePasswordModel = async (password, id_user) => {
     }
 };
 
+const getEmailByUsernameModel = async (username) => {
+    const result = await db("usuarios")
+    .select("usuarios.correo", "usuarios.id")
+    .where({
+        usuario: username
+    }).first();
+
+    return result;
+}
+
+const saveCodeModel = async (code, id_user) => {
+    try{
+        const result = await db("codigos_seguridad")
+        .insert({
+            valor: code,
+            id_usuario: id_user
+        });
+
+        return true;
+    }
+    catch (e){
+        console.log(e);
+        return false;
+    }
+};
+
+const deleteCodeModel = async (code, id) => {
+    try{
+        await db("codigos_seguridad")
+        .where({
+            valor: code,
+            id: id
+        }).delete();
+
+        return true;
+    }
+    catch (e){
+        console.log(e);
+        return false;
+    }
+};
+
 module.exports = {
     findUserData,
     saveTokenModel,
@@ -145,5 +195,9 @@ module.exports = {
     unlockUserModel,
     getSecurityQuestionModel,
     checkAnswerModel,
-    updatePasswordModel
+    updatePasswordModel,
+    getEmailByUsernameModel,
+    saveCodeModel,
+    checkCodeModel,
+    deleteCodeModel
 }
