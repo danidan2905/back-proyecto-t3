@@ -7,7 +7,10 @@ const {
     saveTokenModel,
     removeTokenByIdUserModel,
     blockUserModel,
-    unlockUserModel
+    unlockUserModel,
+    getSecurityQuestionModel,
+    checkAnswerModel,
+    updatePasswordModel
 } = require('../model/users.model');
 
 const login = async (req, res) => {
@@ -120,10 +123,78 @@ const getToken = async (req, res) => {
     return;
 };
 
+const getSecurityQuestion = async (req, res) => {
+    try{
+        let {username} = req.params;
+    
+        const result = await getSecurityQuestionModel(username);
+    
+        res.status(StatusCodes.ACCEPTED).send({
+            ok: true,
+            object: result
+        });
+        return;
+    }
+    catch(e){
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+            ok: true,
+            error: e.toString()
+        });
+        return;
+    }
+};
+
+const checkAnswer = async (req, res) => {
+    try{
+        let {answer, id_user} = req.body;
+    
+        const result = await checkAnswerModel(answer, id_user);
+    
+        res.status(StatusCodes.ACCEPTED).send({
+            ok: true,
+            object: result
+        });
+        return;
+    }
+    catch(e){
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+            ok: true,
+            error: e.toString()
+        });
+        return;
+    }
+};
+
+const modifyPassword = async (req, res) => {
+    try{
+        let {password, id_user} = req.body;
+
+        password = String(cryptojs.SHA256(password));
+    
+        const result = await updatePasswordModel(password, id_user);
+    
+        res.status(StatusCodes.ACCEPTED).send({
+            ok: true,
+            object: result
+        });
+        return;
+    }
+    catch(e){
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+            ok: true,
+            error: e.toString()
+        });
+        return;
+    }
+};
+
 module.exports = {
     login,
     logout,
     getToken,
     blockUser,
-    unlockUser
+    unlockUser,
+    getSecurityQuestion,
+    checkAnswer,
+    modifyPassword
 }

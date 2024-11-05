@@ -93,12 +93,46 @@ const blockUserModel = async (usuario) => {
     return result;
 };
 
-const findUserById = (id) => {};
+const getSecurityQuestionModel = async (username) => {
+    const result = await db("usuarios")
+    .select("usuarios.id_pregunta_seguridad", "usuarios.id as user_id")
+    .select("ps.valor")
+    .join("preguntas_seguridad as ps", "usuarios.id_pregunta_seguridad", "ps.id")
+    .where({
+        usuario: username
+    });
 
+    return result;
+}
 
-const registerNewUser = () => {};
+const checkAnswerModel = async (answer, id_user) => {
+    console.log(answer);
+    console.log(id_user);
+    const result = await db("usuarios").select("usuarios.id")
+    .where({
+        id: id_user,
+        respuesta_seguridad: answer
+    });
 
-const deleteUserById = () => {};
+    return result;
+};
+
+const updatePasswordModel = async (password, id_user) => {
+    try{
+        const result = await db("usuarios")
+        .update({
+            'contraseña': password
+        })
+        .where({
+            id: id_user
+        });
+    
+        return true;
+    }
+    catch(e){
+        return e.toString();
+    }
+};
 
 module.exports = {
     findUserData,
@@ -108,5 +142,8 @@ module.exports = {
     removeTokenByIdUserModel,
     findUserByToken,
     blockUserModel,
-    unlockUserModel
+    unlockUserModel,
+    getSecurityQuestionModel,
+    checkAnswerModel,
+    updatePasswordModel
 }
