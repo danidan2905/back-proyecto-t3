@@ -13,6 +13,6 @@ router.post("/add-user", addUser);
 router.post("/edit-user", editUser);
 
 // ELIMINAR
-router.delete("/delete-user/:id", deleteUser);
+router.post("/delete-user/:id", deleteUser);
 
 module.exports = router;

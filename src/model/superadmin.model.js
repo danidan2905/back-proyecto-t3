@@ -43,11 +43,35 @@ const editUserModel = async (body) => {
 
     return result;
 };
-const deleteUserModel = async (id) => {
-    const result = await db("usuarios")
-    .where({
-        id: id
-    }).delete();
+const deleteUserModel = async (id, auth) => {
+    console.log(auth);
+    const findUser = await db("usuarios").select("id").where(({
+        usuario: auth.username,
+        'contraseña': auth.pass,
+    }));
+
+    console.log(findUser);
+    
+    if (findUser.length){
+        await db("tokens").where({
+            id_user: id
+        }).delete();
+        
+        const result = await db("usuarios")
+        .where({
+            id: id
+        }).delete();
+
+        return {
+            ok: true
+        }
+    }
+    else{
+        return {
+            error: 'Contraseña incorrecta',
+            ok: false
+        }
+    }
 };
 
 module.exports = {

@@ -87,6 +87,8 @@ const unlockUser = async (req, res) => {
     try{
         let {id_user} = req.params;
         let auth = req.body;
+
+        body.password = String(cryptojs.SHA256(body.password));
     
         const result = await unlockUserModel(auth, id_user);
     
@@ -203,11 +205,13 @@ const sendCodeByUsername = async (req, res) => {
 
         if (result?.correo && result?.id){
             await saveCodeModel(code, result.id);
-            sendCodeToMail(code, result.correo);
-            res.status(StatusCodes.ACCEPTED).send({
-                ok: true,
-                object: result
-            });
+            const resultSend = await sendCodeToMail(code, result.correo);
+            if (resultSend){
+                res.status(StatusCodes.ACCEPTED).send({
+                    ok: true,
+                    object: result
+                });
+            }
             return;
         }
         else{

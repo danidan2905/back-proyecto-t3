@@ -10,7 +10,7 @@ const transport = nodemailer.createTransport({
     }
 });
 
-const sendCodeToMail = (code, email) => {
+const sendCodeToMail = async (code, email) => {
     const body = {
         from: process.env.GMAIL_USER,
         to: email,
@@ -21,11 +21,7 @@ const sendCodeToMail = (code, email) => {
         <b style='font-size: 18px'>${code}</b>
         `
     };
-    transport.sendMail(body).then((res) => {
-        console.log(res);
-    }).catch((e) => {
-        console.log(e);
-    });
+    return await transport.sendMail(body);
 };
 
 module.exports = sendCodeToMail;

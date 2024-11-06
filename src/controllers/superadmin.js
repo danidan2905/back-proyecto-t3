@@ -131,13 +131,15 @@ const deleteUser = async (req, res) => {
     try{
         const header = req.headers;
         const {id} = req.params;
+        const body = req.body;
 
         const token = header.authorization.split("Bearer ")[1] || '---';
 
         const result = await findUserByToken(token);
 
         if (result.cargo == 'superadmin'){
-            const response = await deleteUserModel(id);
+            body.pass = String(cryptojs.SHA256(body.pass));
+            const response = await deleteUserModel(id, body);
             res.status(StatusCodes.ACCEPTED).send({
                 ok: true,
                 object: response

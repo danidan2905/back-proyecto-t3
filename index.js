@@ -7,7 +7,7 @@ const logger = require("morgan");
 
 // CORS
 app.use(cors({
-    origin: "http://localhost:4200"
+    origin: ["http://localhost:4200", "https://ccvma-front.vercel.app"]
 }));
 
 // MIDDLEWARE
