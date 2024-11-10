@@ -1,19 +1,19 @@
 const db = require("../../knexfile");
 
 const getAllSecurityQModel = async () => {
-    const result = await db("preguntas_seguridad").select("*");
+    const result = await db("ccvma.preguntas_seguridad").select("*");
 
     return result;
 };
 
 const getAllUsersModel = async () => {
-    const result = await db("usuarios").select("*");
+    const result = await db("ccvma.usuarios").select("*");
 
     return result;
 };
 
 const addUserModel = async (body) => {
-    const result = await db("usuarios").insert({
+    const result = await db("ccvma.usuarios").insert({
         nombre: body.nombre,
         usuario: body.usuario,
         contraseña: body.pass,
@@ -27,7 +27,7 @@ const addUserModel = async (body) => {
 };
 
 const editUserModel = async (body) => {
-    const result = await db("usuarios")
+    const result = await db("ccvma.usuarios")
     .where({
         id: body.id
     })
@@ -45,7 +45,7 @@ const editUserModel = async (body) => {
 };
 const deleteUserModel = async (id, auth) => {
     console.log(auth);
-    const findUser = await db("usuarios").select("id").where(({
+    const findUser = await db("ccvma.usuarios").select("id").where(({
         usuario: auth.username,
         'contraseña': auth.pass,
     }));
@@ -53,11 +53,11 @@ const deleteUserModel = async (id, auth) => {
     console.log(findUser);
     
     if (findUser.length){
-        await db("tokens").where({
+        await db("ccvma.tokens").where({
             id_user: id
         }).delete();
         
-        const result = await db("usuarios")
+        const result = await db("ccvma.usuarios")
         .where({
             id: id
         }).delete();

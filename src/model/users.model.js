@@ -2,10 +2,12 @@ let moment = require("moment");
 const db = require('../../knexfile');
 
 const findUserData = async (user, password) => {
-    const result = await db('usuarios as u')
+    const re = await db("ccvma.usuarios").select("*");
+    console.log(re);
+    const result = await db('ccvma.usuarios as u')
     .select("u.id", "u.nombre", "u.usuario", "u.cargo", "u.correo", "u.estado")
     .select("ps.id as id_pregunta_seguridad", "ps.valor")
-    .join('preguntas_seguridad as ps', 'u.id_pregunta_seguridad', 'ps.id')
+    .join('ccvma.preguntas_seguridad as ps', 'u.id_pregunta_seguridad', 'ps.id')
     .where({
         usuario: user,
         'contraseña': password,
@@ -15,7 +17,7 @@ const findUserData = async (user, password) => {
 };
 
 const saveTokenModel = async (token, id_user) => {
-    const result = await db("tokens").insert({
+    const result = await db("ccvma.tokens").insert({
         token,
         id_user,
         created_at: moment().format("YYYY-MM-DD HH:mm:ss"),
@@ -27,7 +29,7 @@ const saveTokenModel = async (token, id_user) => {
 };
 
 const findTokenByIdUserModel = async (id_user) => {
-    const result = await db("tokens").select("*").where({
+    const result = await db("ccvma.tokens").select("*").where({
         id_user: id_user
     }).first();
 
@@ -35,7 +37,7 @@ const findTokenByIdUserModel = async (id_user) => {
 };
 
 const updateTokenModel = async (token, id_user) => {
-    const result = await db("tokens").where({
+    const result = await db("ccvma.tokens").where({
         token,
         id_user
     }).update({
@@ -46,26 +48,26 @@ const updateTokenModel = async (token, id_user) => {
 };
 
 const removeTokenByIdUserModel = async (id_user) => {
-    const result = await db("tokens").where({id_user}).del();
+    const result = await db("ccvma.tokens").where({id_user}).del();
     if (result) return true;
     return false;
 };
 
 const findUserByToken = async (token) => {
-    const userByToken = await db("tokens").where({token: token})
-    .join("usuarios", "usuarios.id", "tokens.id_user").first();
+    const userByToken = await db("ccvma.tokens").where({token: token})
+    .join("ccvma.usuarios", "usuarios.id", "tokens.id_user").first();
 
     return userByToken;
 };
 
 const unlockUserModel = async (auth, id_user) => {
-    const findUser = await db("usuarios").select("id").where(({
+    const findUser = await db("ccvma.usuarios").select("id").where(({
         usuario: auth.username,
         'contraseña': auth.password,
     }));
     
     if (findUser.length){
-        await db("usuarios").update({
+        await db("ccvma.usuarios").update({
             estado: 1
         }).where({
             id: id_user
@@ -84,7 +86,7 @@ const unlockUserModel = async (auth, id_user) => {
 };
 
 const blockUserModel = async (usuario) => {
-    const result = await db("usuarios").update({
+    const result = await db("ccvma.usuarios").update({
         estado: 0
     }).where({
         usuario: usuario
@@ -94,10 +96,10 @@ const blockUserModel = async (usuario) => {
 };
 
 const getSecurityQuestionModel = async (username) => {
-    const result = await db("usuarios")
+    const result = await db("ccvma.usuarios")
     .select("usuarios.id_pregunta_seguridad", "usuarios.id as user_id")
     .select("ps.valor")
-    .join("preguntas_seguridad as ps", "usuarios.id_pregunta_seguridad", "ps.id")
+    .join("ccvma.preguntas_seguridad as ps", "usuarios.id_pregunta_seguridad", "ps.id")
     .where({
         usuario: username
     });
@@ -106,7 +108,7 @@ const getSecurityQuestionModel = async (username) => {
 }
 
 const checkAnswerModel = async (answer, id_user) => {
-    const result = await db("usuarios").select("usuarios.id")
+    const result = await db("ccvma.usuarios").select("usuarios.id")
     .where({
         id: id_user,
         respuesta_seguridad: answer
@@ -116,7 +118,7 @@ const checkAnswerModel = async (answer, id_user) => {
 };
 
 const checkCodeModel = async (code, id) => {
-    const result = await db("codigos_seguridad").select("codigos_seguridad.id")
+    const result = await db("ccvma.codigos_seguridad").select("codigos_seguridad.id")
     .where({
         id_usuario: id,
         valor: code
@@ -127,7 +129,7 @@ const checkCodeModel = async (code, id) => {
 
 const updatePasswordModel = async (password, id_user) => {
     try{
-        const result = await db("usuarios")
+        const result = await db("ccvma.usuarios")
         .update({
             'contraseña': password
         })
@@ -143,7 +145,7 @@ const updatePasswordModel = async (password, id_user) => {
 };
 
 const getEmailByUsernameModel = async (username) => {
-    const result = await db("usuarios")
+    const result = await db("ccvma.usuarios")
     .select("usuarios.correo", "usuarios.id")
     .where({
         usuario: username
@@ -154,7 +156,7 @@ const getEmailByUsernameModel = async (username) => {
 
 const saveCodeModel = async (code, id_user) => {
     try{
-        const result = await db("codigos_seguridad")
+        const result = await db("ccvma.codigos_seguridad")
         .insert({
             valor: code,
             id_usuario: id_user
@@ -170,7 +172,7 @@ const saveCodeModel = async (code, id_user) => {
 
 const deleteCodeModel = async (code, id) => {
     try{
-        await db("codigos_seguridad")
+        await db("ccvma.codigos_seguridad")
         .where({
             valor: code,
             id: id
