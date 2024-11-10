@@ -88,7 +88,7 @@ const unlockUser = async (req, res) => {
         let {id_user} = req.params;
         let auth = req.body;
 
-        body.password = String(cryptojs.SHA256(body.password));
+        auth.password = String(cryptojs.SHA256(auth.password));
     
         const result = await unlockUserModel(auth, id_user);
     

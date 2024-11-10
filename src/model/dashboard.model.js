@@ -6,16 +6,16 @@ const getHomeValuesModel = async () => {
 
     const amountCurrentMonth = await db("historial_pagos as hp")
     .sum("monto as total")
-    .whereBetween('fecha_corte', [
+    .whereBetween('fecha_pago', [
         moment().startOf("month").format("YYYY-MM-DD"),
         moment().endOf("month").format("YYYY-MM-DD")
     ]);
 
-    const amountPastMonth = await db("historial_pagos as hp")
+    const amountToday = await db("historial_pagos as hp")
     .sum("monto as total")
-    .whereBetween('fecha_corte', [
-        moment().subtract(1, "month").startOf("month").format("YYYY-MM-DD"),
-        moment().subtract(1, "month").endOf("month").format("YYYY-MM-DD")
+    .whereBetween('fecha_pago', [
+        `${moment().format("YYYY-MM-DD")}:00:00:00`,
+        `${moment().format("YYYY-MM-DD")}:23:59:59`
     ]);
 
     const totalOffices = await db("consultorios").count("* as total");
@@ -27,7 +27,7 @@ const getHomeValuesModel = async () => {
     return {
         totalAmount,
         amountCurrentMonth,
-        amountPastMonth,
+        amountToday,
         totalOffices,
         totalOfficesInUse,
         totalFreeOffices
@@ -39,9 +39,10 @@ const getSummaryOfficesModel = async () => {
         solvente: 1
     });
 
-    const halfPaid = await db("consultorios_medicos").countDistinct("id as totalAbonados").where({
-        solvente: 2
-    });
+    const halfPaid = await db("consultorios_medicos")
+    .join("historial_pagos", "consultorios_medicos.id", "historial_pagos.id_consultorios_medicos")
+    .whereRaw(`historial_pagos.restante > 0`)
+    .countDistinct("consultorios_medicos.id as totalAbonados");
 
     const notPaid = await db("consultorios_medicos").countDistinct("id as noPagados").where({
         solvente: 0

@@ -1,13 +1,15 @@
 const db = require("../../knexfile");
 
 const addNewPaymentModel = async (body) => {
-    console.log(body);
     const result = await db("historial_pagos").insert({
         id_consultorios_medicos: body.id_consultorios_medicos,
         fecha_corte: body.fecha_corte,
         fecha_pago: body.fecha_pago,
-        monto: body.monto
+        monto: body.monto,
+        restante: body.restante
     });
+
+    console.log(body);
 
     await db("consultorios_medicos").where({
         id: body.id_consultorios_medicos
@@ -36,7 +38,8 @@ const updatePaymentModel = async (body) => {
         id_consultorios_medicos: body.id_consultorios_medicos,
         fecha_corte: body.fecha_corte,
         fecha_pago: body.fecha_pago,
-        monto: body.monto
+        monto: body.monto,
+        restante: body.restante
     });
 
     await db("consultorios_medicos").where({
@@ -67,11 +70,16 @@ const addNewDoctorModel = async (body) => {
 };
 
 const addNewDoctorsOfficeModel = async (body) => {
+    const find = await db("consultorios").select("*").where({
+        num_consultorio: body.num_consultorio
+    }).first();
+    if ((find?.id)){
+        throw new Error(`El consultorio con el número ${body.num_consultorio} ya existe`);
+    }
     const result = await db("consultorios").insert({
         num_consultorio: body.num_consultorio,
         observaciones: body.observaciones || ''
     });
-
     return result;
 };
 
@@ -144,10 +152,13 @@ const addOrUpdateMaintenanceModel = async (body) => {
 };
 
 const getAllPaymentsModel = async () => {
-    const result = await db("historial_pagos as hp").select("hp.id", "hp.fecha_corte", "hp.fecha_pago", "hp.monto")
+    const result = await db("historial_pagos as hp")
+    .select("hp.id", "hp.fecha_corte", "hp.fecha_pago", "hp.monto", "hp.restante")
     .select("cm.id as id_consultorios_medicos", "cm.id_medico", "cm.condicion", "cm.hora_inicio", "cm.hora_fin", "cm.solvente")
     .select("c.id as id_consultorio", "c.num_consultorio", "c.observaciones")
+    .select("m.nombre_completo as nombre_medico")
     .join("consultorios_medicos as cm", "hp.id_consultorios_medicos", "cm.id")
+    .join("medicos as m", "cm.id_medico", "m.id")
     .join("consultorios as c", "cm.id_consultorio", "c.id");
 
     return result;
@@ -198,9 +209,13 @@ const getAllSchedulesModel = async () => {
     .select("cm.id as id", "cm.id_consultorio", "cm.condicion", "cm.hora_inicio", "cm.hora_fin", "cm.solvente")
     .select("m.id as id_medico", "m.nombre_completo", "m.cedula", "m.num_telefono", "m.correo")
     .select("c.id as id_consultorio", "c.num_consultorio", "c.observaciones")
+    .select(db.raw("GROUP_CONCAT(DISTINCT hp.monto ORDER BY hp.id) as pagos"))
+    .select(db.raw("GROUP_CONCAT(DISTINCT hp.restante ORDER BY hp.id) as monto_restantes"))
     .join("consultorios as c", "cm.id_consultorio", "c.id")
-    .join("medicos as m", "cm.id_medico", "m.id");
-
+    .leftJoin("historial_pagos as hp", "hp.id_consultorios_medicos", "cm.id")
+    .join("medicos as m", "cm.id_medico", "m.id")
+    .groupBy("cm.id");
+    
     return result;
 };
 

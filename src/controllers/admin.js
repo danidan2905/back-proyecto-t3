@@ -210,7 +210,8 @@ const addDoctorsOffice = async (req, res) => {
     catch(error){
         console.log(error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
-            ok: false
+            ok: false,
+            message: error.toString()
         });
     }
 };
