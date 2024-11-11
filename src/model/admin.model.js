@@ -212,7 +212,7 @@ const getAllSchedulesModel = async () => {
     .select(db.raw("GROUP_CONCAT(DISTINCT hp.monto ORDER BY hp.id) as pagos"))
     .select(db.raw("GROUP_CONCAT(DISTINCT hp.restante ORDER BY hp.id) as monto_restantes"))
     .join("ccvma.consultorios as c", "cm.id_consultorio", "c.id")
-    .leftjoin("ccvma.historial_pagos as hp", "hp.id_consultorios_medicos", "cm.id")
+    .leftJoin("ccvma.historial_pagos as hp", "hp.id_consultorios_medicos", "cm.id")
     .join("ccvma.medicos as m", "cm.id_medico", "m.id")
     .groupBy("cm.id");
     
