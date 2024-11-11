@@ -52,17 +52,18 @@ const updatePaymentModel = async (body) => {
 };
 
 const addNewDoctorModel = async (body) => {
-    console.log(body);
 
     const result = await db("ccvma.medicos").insert({
         nombre_completo: body.nombre_completo,
         cedula: body.cedula,
         num_telefono: body.num_telefono,
         correo: body.correo
-    });
+    }).returning("id");
+
+    console.log(result);
 
     await db("ccvma.especialidad_medicos").insert({
-        id_medico: result[0],
+        id_medico: result[0].id,
         id_especialidad: body.especialidad
     });
 
@@ -174,23 +175,7 @@ const getAllDoctorsOfficeModel = async (filters = {}) => {
     const result = await db("ccvma.consultorios as c")
     .select("c.id", "c.observaciones", "c.num_consultorio")
     .select("mac.id as id_mantenimiento_ac", "mac.cap_enf", "mac.tecnico", "mac.ult_fecha_mantenimiento", "mac.precio_mant")
-    .leftJoin("mantenimiento_ac as mac", "mac.id_consultorio", "c.id")
-
-    // const result = await db.raw(`
-    //     (
-    //     SELECT c.id, c.observaciones, c.num_consultorio
-    //     FROM consultorios as c
-    //     LEFT JOIN (
-    //         SELECT mac.id as id_mantenimiento_ac, mac.cap_enf, mac.tecnico, mac.ult_fecha_mantenimiento, mac.precio_mant
-    //         FROM mantenimiento_ac as mac
-    //         INNER JOIN (
-    //             SELECT id_consultorio MAX(ult_fecha_mantenimiento) as ultimate_fecha
-    //             FROM mantenimiento_ac
-    //             GROUP BY mac.id_consultorio
-    //         ) as max_mac ON mac.id_consultorio = max_mac.id_consultorio AND mac.ult_fecha_mantenimiento = max_mac.ult_fecha_mantenimiento
-    //     ) as m ON c.id = m.id_consultorio
-    //     )
-    //     `);
+    .leftJoin("ccvma.mantenimiento_ac as mac", "mac.id_consultorio", "c.id")
 
     return result;
 };
@@ -199,8 +184,8 @@ const getAllDoctorsModel = async () => {
     const result = await db("ccvma.medicos as m")
     .select("m.id", "m.nombre_completo", "m.cedula", "m.num_telefono", "m.correo")
     .select("e.id as id_especialidad", "e.descripcion")
-    .join("ccvma.especialidad_medicos as em", "m.id", "em.id_medico")
-    .join("ccvma.especialidad as e", "e.id", "em.id_especialidad");
+    .leftJoin("ccvma.especialidad_medicos as em", "m.id", "em.id_medico")
+    .leftJoin("ccvma.especialidad as e", "e.id", "em.id_especialidad");
     return result;
 };
 
@@ -209,12 +194,12 @@ const getAllSchedulesModel = async () => {
     .select("cm.id as id", "cm.id_consultorio", "cm.condicion", "cm.hora_inicio", "cm.hora_fin", "cm.solvente")
     .select("m.id as id_medico", "m.nombre_completo", "m.cedula", "m.num_telefono", "m.correo")
     .select("c.id as id_consultorio", "c.num_consultorio", "c.observaciones")
-    .select(db.raw("GROUP_CONCAT(DISTINCT hp.monto ORDER BY hp.id) as pagos"))
-    .select(db.raw("GROUP_CONCAT(DISTINCT hp.restante ORDER BY hp.id) as monto_restantes"))
+    .select(db.raw("array_agg(hp.monto ORDER BY hp.id) as pagos"))
+    .select(db.raw("array_agg(hp.restante ORDER BY hp.id) as monto_restantes"))
     .join("ccvma.consultorios as c", "cm.id_consultorio", "c.id")
     .leftJoin("ccvma.historial_pagos as hp", "hp.id_consultorios_medicos", "cm.id")
     .join("ccvma.medicos as m", "cm.id_medico", "m.id")
-    .groupBy("cm.id");
+    .groupBy("cm.id", "m.id", "c.id");
     
     return result;
 };

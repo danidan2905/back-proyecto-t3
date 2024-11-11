@@ -41,12 +41,12 @@ const getSummaryOfficesModel = async () => {
 
     const halfPaid = await db("ccvma.consultorios_medicos")
     .join("ccvma.historial_pagos", "consultorios_medicos.id", "historial_pagos.id_consultorios_medicos")
-    .whereRaw(`historial_pagos.restante > 0`)
+    .whereRaw(`ccvma.historial_pagos.restante > 0 AND ccvma.consultorios_medicos.solvente = 0`)
     .countDistinct("consultorios_medicos.id as totalAbonados");
 
-    const notPaid = await db("ccvma.consultorios_medicos").countDistinct("id as noPagados").where({
-        solvente: 0
-    });
+    const notPaid = await db("ccvma.consultorios_medicos").countDistinct("ccvma.consultorios_medicos.id as noPagados")
+    .leftJoin("ccvma.historial_pagos", "ccvma.consultorios_medicos.id", "ccvma.historial_pagos.id_consultorios_medicos")
+    .whereRaw("(ccvma.historial_pagos.monto = 0 OR ccvma.historial_pagos.monto IS NULL) AND (ccvma.consultorios_medicos.solvente = 0 OR ccvma.consultorios_medicos.solvente IS NULL)");
 
     return {
         paid,
