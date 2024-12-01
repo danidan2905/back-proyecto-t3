@@ -12,6 +12,21 @@ const getAllUsersModel = async () => {
     return result;
 };
 
+const getAllLogbookModel = async () => {
+    const result = await db("ccvma.bitacora as b")
+    .select("b.id", "b.accion", "b.fecha")
+    .select("u.id as id_usuario", "u.nombre", "u.usuario", "u.cargo", "u.estado")
+    .join("ccvma.usuarios as u", "u.id", "b.id_usuario");
+
+    return result;
+};
+
+const getUserByIdModel = async (id) => {
+    const result = await db("ccvma.usuarios").select("*").where({id: id}).first();
+
+    return result;
+};
+
 const addUserModel = async (body) => {
     const result = await db("ccvma.usuarios").insert({
         nombre: body.nombre,
@@ -44,13 +59,10 @@ const editUserModel = async (body) => {
     return result;
 };
 const deleteUserModel = async (id, auth) => {
-    console.log(auth);
     const findUser = await db("ccvma.usuarios").select("id").where(({
         usuario: auth.username,
         'contraseña': auth.pass,
     }));
-
-    console.log(findUser);
     
     if (findUser.length){
         await db("ccvma.tokens").where({
@@ -79,5 +91,7 @@ module.exports = {
     addUserModel,
     getAllUsersModel,
     editUserModel,
-    deleteUserModel
+    deleteUserModel,
+    getUserByIdModel,
+    getAllLogbookModel
 };

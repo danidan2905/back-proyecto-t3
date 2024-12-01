@@ -9,8 +9,6 @@ const addNewPaymentModel = async (body) => {
         restante: body.restante
     });
 
-    console.log(body);
-
     await db("ccvma.consultorios_medicos").where({
         id: body.id_consultorios_medicos
     }).update({
@@ -21,7 +19,6 @@ const addNewPaymentModel = async (body) => {
 };
 
 const updatePaymentModel = async (body) => {
-    console.log(body);
     const old_id = body?.old_id_consultorios_medicos;
 
     if (old_id){
@@ -71,6 +68,8 @@ const addNewDoctorModel = async (body) => {
 };
 
 const addNewDoctorsOfficeModel = async (body) => {
+    body.num_consultorio = body.num_consultorio.toLowerCase();
+
     const find = await db("ccvma.consultorios").select("*").where({
         num_consultorio: body.num_consultorio
     }).first();
@@ -99,7 +98,6 @@ const addOrUpdateSpecialtiesModel = async (body) => {
                 continue;
             }
             else{
-                console.log("insert", body[i].descripcion);
                 await db("ccvma.especialidad").insert({
                     descripcion: body[i].descripcion
                 });
@@ -114,7 +112,6 @@ const addOrUpdateSpecialtiesModel = async (body) => {
 };
 
 const addOrUpdateMaintenanceModel = async (body) => {
-    console.log(body);
     for (let i = 0; i < body.length; i++){
         try{
             const update = await db("ccvma.mantenimiento_ac").select("*").where({
@@ -133,7 +130,6 @@ const addOrUpdateMaintenanceModel = async (body) => {
                 continue;
             }
             else{
-                console.log("insert", body[i].descripcion);
                 await db("ccvma.mantenimiento_ac").insert({
                     cap_enf: body[i].cap_enf,
                     tecnico: body[i].tecnico,
@@ -165,8 +161,34 @@ const getAllPaymentsModel = async () => {
     return result;
 };
 
+const getPaymentByIdModel = async (id) => {
+    const result = await db("ccvma.historial_pagos as hp")
+    .select("hp.id", "hp.fecha_corte", "hp.fecha_pago", "hp.monto", "hp.restante")
+    .select("cm.id as id_consultorios_medicos", "cm.id_medico", "cm.condicion", "cm.hora_inicio", "cm.hora_fin", "cm.solvente")
+    .select("c.id as id_consultorio", "c.num_consultorio", "c.observaciones")
+    .select("m.nombre_completo as nombre_medico")
+    .join("ccvma.consultorios_medicos as cm", "hp.id_consultorios_medicos", "cm.id")
+    .join("ccvma.medicos as m", "cm.id_medico", "m.id")
+    .join("ccvma.consultorios as c", "cm.id_consultorio", "c.id")
+    .whereRaw(`hp.id = ?`, id)
+    .first();
+
+    return result;
+};
+
 const getAllSpecialtiesModel = async () => {
     const result = await db("ccvma.especialidad").select("*");
+
+    return result;
+};
+
+const getSpecialtyByIdModel = async (id) => {
+    const result = await db("ccvma.especialidad")
+    .select("*")
+    .where({
+        id: id
+    })
+    .first();
 
     return result;
 };
@@ -180,12 +202,35 @@ const getAllDoctorsOfficeModel = async (filters = {}) => {
     return result;
 };
 
+const getDoctorsOfficeByIdModel = async (id) => {
+    const result = await db("ccvma.consultorios as c")
+    .select("c.id", "c.observaciones", "c.num_consultorio")
+    .select("mac.id as id_mantenimiento_ac", "mac.cap_enf", "mac.tecnico", "mac.ult_fecha_mantenimiento", "mac.precio_mant")
+    .leftJoin("ccvma.mantenimiento_ac as mac", "mac.id_consultorio", "c.id")
+    .whereRaw(`c.id = ?`, id)
+    .first();
+
+    return result;
+};
+
 const getAllDoctorsModel = async () => {
     const result = await db("ccvma.medicos as m")
     .select("m.id", "m.nombre_completo", "m.cedula", "m.num_telefono", "m.correo")
     .select("e.id as id_especialidad", "e.descripcion")
     .leftJoin("ccvma.especialidad_medicos as em", "m.id", "em.id_medico")
     .leftJoin("ccvma.especialidad as e", "e.id", "em.id_especialidad");
+    return result;
+};
+
+const getDoctorByIdModel = async (id) => {
+    const result = await db("ccvma.medicos as m")
+    .select("m.id", "m.nombre_completo", "m.cedula", "m.num_telefono", "m.correo")
+    .select("e.id as id_especialidad", "e.descripcion")
+    .leftJoin("ccvma.especialidad_medicos as em", "m.id", "em.id_medico")
+    .leftJoin("ccvma.especialidad as e", "e.id", "em.id_especialidad")
+    .whereRaw(`m.id = ?`, id)
+    .first();
+
     return result;
 };
 
@@ -204,8 +249,36 @@ const getAllSchedulesModel = async () => {
     return result;
 };
 
+const getScheduleByIdModel = async (id) => {
+    const result = await db("ccvma.consultorios_medicos as cm")
+    .select("cm.id as id", "cm.id_consultorio", "cm.condicion", "cm.hora_inicio", "cm.hora_fin", "cm.solvente")
+    .select("m.id as id_medico", "m.nombre_completo", "m.cedula", "m.num_telefono", "m.correo")
+    .select("c.id as id_consultorio", "c.num_consultorio", "c.observaciones")
+    .select(db.raw("array_agg(hp.monto ORDER BY hp.id) as pagos"))
+    .select(db.raw("array_agg(hp.restante ORDER BY hp.id) as monto_restantes"))
+    .join("ccvma.consultorios as c", "cm.id_consultorio", "c.id")
+    .leftJoin("ccvma.historial_pagos as hp", "hp.id_consultorios_medicos", "cm.id")
+    .join("ccvma.medicos as m", "cm.id_medico", "m.id")
+    .groupBy("cm.id", "m.id", "c.id")
+    .whereRaw(`cm.id = ?`, id)
+    .first();
+    
+    return result;
+};
+
 const getAllMaintenanceModel = async () => {
     const result = await db("ccvma.mantenimiento_ac").select("*");
+
+    return result;
+};
+
+const getMaintenanceByIdModel = async (id) => {
+    const result = await db("ccvma.mantenimiento_ac as mac")
+    .select("mac.id", "mac.cap_enf", "mac.tecnico", "mac.ult_fecha_mantenimiento", "mac.precio_mant", "mac.observacion")
+    .select("c.id as id_consultorio", "c.num_consultorio", "c.observaciones")
+    .join("ccvma.consultorios as c", "mac.id_consultorio", "c.id")
+    .whereRaw(`mac.id = ?`, id)
+    .first();
 
     return result;
 };
@@ -390,5 +463,11 @@ module.exports = {
     deleteSpecialtyModel,
     deleteMaintenanceModel,
     deleteOfficeModel,
-    updateDoctorsOfficeModel
+    updateDoctorsOfficeModel,
+    getDoctorsOfficeByIdModel,
+    getScheduleByIdModel,
+    getPaymentByIdModel,
+    getDoctorByIdModel,
+    getSpecialtyByIdModel,
+    getMaintenanceByIdModel
 };
